@@ -6,7 +6,8 @@
    ```
    $ python -m venv venv
    $ venv\Scripts\activate
-
+   ```
+   
 1. Install the requirements
 
    ```
