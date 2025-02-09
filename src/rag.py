@@ -3,7 +3,7 @@ from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageCon
 from src.keys import load_api_key
 
 # THIS SCRIPT CREATES VECTOR STORAGE - IF .rag/vector_storage ALREADY EXISTS, NO NEED TO RUN THIS SCRIPT AGAIN
-load_api_key("openai_api_key.txt", "OPENAI_API_KEY")
+load_api_key("OPENAI_API_KEY")
 
 PERSIST_DIR = "./rag/vector_storage"
 

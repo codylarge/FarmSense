@@ -3,8 +3,8 @@ import os
 from llama_index.core import StorageContext, load_index_from_storage
 from src.keys import load_api_key
 
-load_api_key("groq_api_key.txt", "GROQ_API_KEY")
-load_api_key("openai_api_key.txt", "OPENAI_API_KEY")
+load_api_key("GROQ_API_KEY")
+load_api_key("OPENAI_API_KEY")
 
 client = Groq()
 

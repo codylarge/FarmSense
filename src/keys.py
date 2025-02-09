@@ -1,12 +1,7 @@
 import os
+import streamlit as st
 
-# Files:
-# - ./groq_api_key.txt
-# - ./openai_api_key.txt
-# Each file must be one line with only the api key
-
-
-# load api keys from text file 
-def load_api_key(file_path, env_var_name):
-    with open(file_path, "r") as file:
-        os.environ[env_var_name] = file.read().strip()
+# Load api keys from streamlit secrets
+def load_api_key(env_var_name):
+    api_key = st.secrets[env_var_name]
+    os.environ[env_var_name] = api_key

@@ -1,6 +1,7 @@
 import streamlit as st
 from PIL import Image
 import numpy as np
+#from streamlit_auth0 import login_button, get_username, get_user_info
 
 from src.clip_utils import load_clip_model, get_text_features, get_image_features, compute_similarity, load_custom_clip_model
 from src.llama_utils import process_user_input, generate_clip_description, process_user_input_norag
@@ -14,17 +15,9 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    if "rag_enabled" not in st.session_state:
-        st.session_state.rag_enabled = True  # Default to RAG enabled
-
     model, preprocess, device = load_clip_model()
     
     candidate_captions = get_candidate_captions()
-
-    # RAG toggle
-    rag_enabled = st.session_state.rag_enabled
-    st.session_state.rag_enabled = st.toggle("RAG Enabled", rag_enabled)
-    print(f"RAG Enabled: {st.session_state.rag_enabled}")
 
     # Upload image
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
@@ -62,10 +55,7 @@ def main():
  
     if user_prompt:
         print("Text prompt")
-        if rag_enabled:
-            process_user_input(st, user_prompt)  # RAG enabled
-        else:
-            process_user_input_norag(st, user_prompt)  # No RAG
+        process_user_input(st, user_prompt)  # RAG enabled
 
 if __name__ == "__main__":
     main()
