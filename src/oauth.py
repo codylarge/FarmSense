@@ -1,11 +1,4 @@
 from google_auth_oauthlib.flow import Flow
-import os
-import pickle
-import pathlib
-import google.auth.transport.requests
-from google.oauth2.credentials import Credentials
-from google.auth.exceptions import RefreshError
-
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
@@ -24,21 +17,21 @@ def get_login_url():
     auth_url, _ = flow.authorization_url(prompt="consent")
     return auth_url
 
-def get_user_info(auth_code):
-    """Exchange auth code for user credentials and fetch user info"""
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
-    )
-    flow.fetch_token(code=auth_code)
-    credentials = flow.credentials
+from google.auth.exceptions import RefreshError
+from oauthlib.oauth2 import InvalidGrantError
 
-    # Verify and decode the ID token
+def get_user_info(auth_code):
     try:
+        flow = Flow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE,
+            scopes=SCOPES,
+            redirect_uri=REDIRECT_URI
+        )
+        flow.fetch_token(code=auth_code)
+        credentials = flow.credentials
+
         id_info = id_token.verify_oauth2_token(credentials.id_token, requests.Request())
 
-        # Extract user information safely
         user_info = {
             "token": credentials.token,
             "refresh_token": credentials.refresh_token,
@@ -49,6 +42,12 @@ def get_user_info(auth_code):
         }
         return user_info
 
+    except InvalidGrantError:
+        print("Invalid grant error: Token expired or already used.")
+        return None  # Handle logout or re-authentication
+    except RefreshError:
+        print("Refresh token error: User needs to log in again.")
+        return None  # Handle token refresh failure
     except ValueError as e:
-        st.error(f"Error verifying ID token: {e}")
+        print(f"Error verifying ID token: {e}")
         return None

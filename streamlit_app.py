@@ -24,19 +24,19 @@ def main():
 
     # ==== Google Sign-In in Sidebar (Right Side) ====
     with col2:
-        st.subheader("🔑 Google Sign-In")
+        #st.subheader("🔑 Google Sign-In")
 
         if "google_user" not in st.session_state:
             login_url = get_login_url()
             st.markdown(f'<a href="{login_url}" target="_self"><button>Sign in with Google</button></a>', unsafe_allow_html=True)
 
-            # ✅ Updated: Use `st.query_params` instead of `st.experimental_get_query_params`
             query_params = st.query_params
             if "code" in query_params:
                 auth_code = query_params["code"]
                 user_info = get_user_info(auth_code)
-                st.session_state["google_user"] = user_info
-                st.rerun()
+                if user_info is not None: # Fix logout issues, may be causing pfp issue
+                    st.session_state["google_user"] = user_info
+                    st.rerun()
         else:
             user = st.session_state["google_user"]
             st.image(user["picture"], width=50)
