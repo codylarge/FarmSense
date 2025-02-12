@@ -1,4 +1,5 @@
 .streamlit/secrets.toml
+client_secret.json
 
 *.pth
 *key.txt
