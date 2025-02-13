@@ -7,6 +7,7 @@ from src.clip_utils import load_clip_model, get_text_features, get_image_feature
 from src.llama_utils import process_user_input, generate_clip_description
 from src.classes import get_candidate_captions
 from src.oauth import get_login_url, get_user_info
+from src.firebase_config import create_user_if_not_exists, create_new_chat
 
 def main():
     st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
