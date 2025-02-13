@@ -2,11 +2,13 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 import uuid  # For generating unique chat IDs
-from datetime import datetime
+from datetime import datetime, timezone
 
-# Load credentials from the downloaded JSON file
-cred = credentials.Certificate("firebase_key.json")
-firebase_admin.initialize_app(cred)
+# Check if Firebase is already initialized
+if not firebase_admin._apps:
+    cred = credentials.Certificate("firebase_key.json")
+    firebase_admin.initialize_app(cred)
+
 # Get Firestore client
 db = firestore.client()
 
@@ -18,7 +20,7 @@ def create_user_if_not_exists(user_id, user_name, user_email):
         user_ref.set({
             "name": user_name,
             "email": user_email,
-            "created_at": datetime.now(datetime.timezone.utc),
+            "created_at": datetime.now(timezone.utc),
         })
 
 def create_new_chat(user_id):

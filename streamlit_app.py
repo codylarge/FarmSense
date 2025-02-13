@@ -35,6 +35,15 @@ def main():
                 user_info = get_user_info(auth_code)
                 if user_info:
                     st.session_state["google_user"] = user_info
+    
+                    # Create user entry in Firestore if not exists
+                    user_id = user_info["sub"]
+                    create_user_if_not_exists(user_id, user_info["name"], user_info["email"])
+    
+                    # Add a new chat session
+                    new_chat_id = create_new_chat(user_id)
+                    st.session_state["current_chat_id"] = new_chat_id
+    
                     st.rerun()
         else:
             user = st.session_state["google_user"]

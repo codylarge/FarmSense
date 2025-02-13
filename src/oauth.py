@@ -39,6 +39,7 @@ def get_user_info(auth_code):
             "email": id_info.get("email", "N/A"),
             "name": id_info.get("name", "N/A"),
             "picture": id_info.get("picture", ""),
+            "sub": id_info.get("sub")  # "sub" is a globally unique identifier (UID) assigned to each Google user.
         }
         return user_info
 
