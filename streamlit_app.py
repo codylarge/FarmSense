@@ -108,8 +108,7 @@ def main():
     user_prompt = st.chat_input("Ask LLAMA about this diagnosis...")
     if user_prompt:
         if "current_chat_id" not in st.session_state:
-                if(prompts == 1):
-                st.session_state["current_chat_id"] = create_new_chat(user["sub"])
+            st.session_state["current_chat_id"] = create_new_chat(user["sub"])
         messages = process_user_input(user_prompt)  # Handle user query
         update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[0])
         update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[1])
