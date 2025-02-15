@@ -20,7 +20,7 @@ def get_login_url():
 from google.auth.exceptions import RefreshError
 from oauthlib.oauth2 import InvalidGrantError
 
-def get_user_info(auth_code):
+def get_google_info(auth_code):
     try:
         flow = Flow.from_client_secrets_file(
             CLIENT_SECRETS_FILE,
@@ -39,7 +39,8 @@ def get_user_info(auth_code):
             "email": id_info.get("email", "N/A"),
             "name": id_info.get("name", "N/A"),
             "picture": id_info.get("picture", ""),
-            "sub": id_info.get("sub")  # "sub" is a globally unique identifier (UID) assigned to each Google user.
+            "sub": id_info.get("sub"),  # "sub" is a globally unique identifier (UID) assigned to each Google user.
+            "chat_history": [] # Initialize as none, will be fetched later
         }
         return user_info
 

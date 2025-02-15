@@ -4,10 +4,11 @@ import numpy as np
 
 # Importing CLIP and LLaMA utilities
 from src.clip_utils import load_clip_model, get_text_features, get_image_features, compute_similarity, load_custom_clip_model
-from src.llama_utils import process_user_input, generate_clip_description
 from src.classes import get_candidate_captions
-from src.oauth import get_login_url, get_user_info
-from src.firebase_config import create_user_if_not_exists, create_new_chat, get_user_chats, load_chat_history  
+from src.oauth import get_login_url, get_google_info
+from src.firebase_config import create_user_if_not_exists, create_new_chat, fetch_chat_history, load_chat, update_chat_history
+from src.llama_utils import generate_clip_description, process_user_input, display_current_chat
+
 
 def main():
     st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
@@ -15,10 +16,12 @@ def main():
     # Load models
     model, preprocess, device = load_clip_model()
     candidate_captions = get_candidate_captions()
+    clicked_previous_chat = False # temporary.
+    prompts = 0 # Track # of prompts. Not ideal method
 
     # Initialize session state
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+    if "current_chat_history" not in st.session_state:
+        st.session_state["current_chat_history"] = []
 
     # ==== SIDEBAR (Chat History + Google Sign-In) ====
     with st.sidebar:
@@ -33,19 +36,17 @@ def main():
             # Check if user has attempted to log in ('code' in url)
             if "code" in query_params:
                 auth_code = query_params["code"]
-                user_info = get_user_info(auth_code)
+                user_info = get_google_info(auth_code)
                 if user_info:
-                    st.session_state["google_user"] = user_info
-    
-                    # Create user entry in Firestore if not exists
                     user_id = user_info["sub"]
+                    # Create user entry in Firestore if not exists
                     create_user_if_not_exists(user_id, user_info["name"], user_info["email"])
-    
-                    # Add a new chat session
-                    new_chat_id = create_new_chat(user_id)
-                    st.session_state["current_chat_id"] = new_chat_id
-    
+                    # Set user info in session state
+                    user_info["chat_history"] = fetch_chat_history(user_id)
+                    st.session_state["google_user"] = user_info
+                
                     st.rerun()
+        # If logged in, display user info and logout button
         else:
             user = st.session_state["google_user"]
             col1, col2 = st.columns([1, 4])  # Align profile picture and text
@@ -54,18 +55,24 @@ def main():
             with col2:
                 st.write(f"**{user['name']}**")
                 st.write(f"📧 {user['email']}")
-            
+
             if st.button("Logout", use_container_width=True):
                 st.session_state.pop("google_user", None)
                 st.rerun()
 
-        st.divider()  # Separator for better layout
+        st.divider()
 
         # Display Chat History in Sidebar
         st.subheader("📝 Chat History")
-        for message in st.session_state.chat_history:
-            role_icon = "🧑‍💻" if message["role"] == "user" else "🤖"
-            st.write(f"{role_icon} {message['content']}")
+        if st.session_state["google_user"]:
+            user_info = st.session_state["google_user"]
+            for chat in user_info["chat_history"]:
+                chat_title = chat["title"]
+                chat_id = chat["chat_id"]
+                if st.button(f"{chat_title}", key=chat_id):
+                    load_chat(user_info["sub"], chat_id)
+                    clicked_previous_chat = True
+                    st.session_state["current_chat_id"] = chat_id
 
     # ==== MAIN CONTENT ====
     st.title("🌱 CLIP Crop & Disease Detection")
@@ -83,7 +90,7 @@ def main():
         similarities = compute_similarity(image_features, text_features)
 
         # Get the top 3 most similar captions
-        top_indices = np.argsort(similarities.cpu().numpy())[::-1][:3] 
+        top_indices = np.argsort(similarities.cpu().numpy())[::-1][:3]
         top_captions = [candidate_captions[idx] for idx in top_indices]
         top_confidences = [similarities[idx].item() * 100 for idx in top_indices]
 
@@ -91,14 +98,22 @@ def main():
         confidence = top_confidences[0]
 
         # Generate AI response if no history exists
-        if not st.session_state.chat_history:
-            generate_clip_description(st, best_caption, confidence)
+        if not st.session_state.current_chat_history:
+            generate_clip_description(best_caption, confidence)
 
     # Chat Interaction
     st.subheader("💬 Chat with LLAMA")
+    if clicked_previous_chat:
+        display_current_chat()
     user_prompt = st.chat_input("Ask LLAMA about this diagnosis...")
     if user_prompt:
-        process_user_input(st, user_prompt)  # Handle user query
+        if "current_chat_id" not in st.session_state:
+                if(prompts == 1):
+                st.session_state["current_chat_id"] = create_new_chat(user["sub"])
+        messages = process_user_input(user_prompt)  # Handle user query
+        update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[0])
+        update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[1])
+        prompts += 1
 
 if __name__ == "__main__":
     main()

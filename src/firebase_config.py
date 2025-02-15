@@ -3,7 +3,7 @@ from firebase_admin import credentials, firestore
 import os
 import uuid  # For generating unique chat IDs
 from datetime import datetime, timezone
-
+import streamlit as st
 # Check if Firebase is already initialized
 if not firebase_admin._apps:
     cred = credentials.Certificate("firebase_key.json")
@@ -32,9 +32,44 @@ def create_new_chat(user_id):
         "created_at": datetime.now(timezone.utc),
         "last_updated": datetime.now(timezone.utc),
         "title": "New Chat",  # Placeholder title
-        "messages": [
-            {"role": "assistant", "content": "Hello, how can I help you today?"}
-        ]
+        "messages": []
     })
+    return chat_id
 
-    return chat_id  # Return the new chat ID
+def fetch_chat_history(user_id):
+    """Fetches all chat history for the given user (ID and title only)"""
+    chat_history = []
+    chats_ref = db.collection("users").document(user_id).collection("chats")
+    for chat in chats_ref.stream():
+        chat_data = chat.to_dict()
+        chat_history.append({
+            "chat_id": chat.id,
+            "title": chat_data.get("title", "Untitled Chat"),
+        })
+    return chat_history
+
+def update_chat_history(user_id, chat_id, message):
+    """Update the chat history with a new message."""
+    chat_ref = db.collection("users").document(user_id).collection("chats").document(chat_id)
+    chat_data = chat_ref.get().to_dict()
+    chat_data["messages"].append(message)
+    chat_data["last_updated"] = datetime.now(timezone.utc)
+    chat_ref.set(chat_data)
+
+def load_chat(user_id, chat_id):
+    """Load chat history for the selected chat."""
+    # Reset current chat history in session state
+    st.session_state["current_chat_history"] = []
+
+    # Fetch the chat document from the database
+    chat_ref = db.collection("users").document(user_id).collection("chats").document(chat_id)
+    chat_doc = chat_ref.get()
+
+    if chat_doc.exists:
+        chat_data = chat_doc.to_dict()
+        messages = chat_data.get("messages", [])
+        print(messages)
+        st.session_state["current_chat_history"] = messages
+    else:
+        st.warning("Chat not found.")
+    
