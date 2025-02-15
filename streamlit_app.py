@@ -7,7 +7,7 @@ from src.clip_utils import load_clip_model, get_text_features, get_image_feature
 from src.llama_utils import process_user_input, generate_clip_description
 from src.classes import get_candidate_captions
 from src.oauth import get_login_url, get_user_info
-from src.firebase_config import create_user_if_not_exists, create_new_chat
+from src.firebase_config import create_user_if_not_exists, create_new_chat, get_user_chats, load_chat_history  
 
 def main():
     st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
@@ -30,6 +30,7 @@ def main():
             st.markdown(f'<a href="{login_url}" target="_self"><button style="width: 100%;">🔑 Sign in with Google</button></a>', unsafe_allow_html=True)
 
             query_params = st.query_params
+            # Check if user has attempted to log in ('code' in url)
             if "code" in query_params:
                 auth_code = query_params["code"]
                 user_info = get_user_info(auth_code)

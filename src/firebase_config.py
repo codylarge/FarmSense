@@ -29,8 +29,8 @@ def create_new_chat(user_id):
     chat_ref = db.collection("users").document(user_id).collection("chats").document(chat_id)
 
     chat_ref.set({
-        "created_at": datetime.utcnow(),
-        "last_updated": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
+        "last_updated": datetime.now(timezone.utc),
         "title": "New Chat",  # Placeholder title
         "messages": [
             {"role": "assistant", "content": "Hello, how can I help you today?"}
