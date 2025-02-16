@@ -22,11 +22,13 @@ def main():
     # Initialize session state
     if "current_chat_history" not in st.session_state:
         st.session_state["current_chat_history"] = []
+    if "uploaded_image" not in st.session_state:
+        st.session_state.uploaded_image = None
 
     # ==== SIDEBAR (Chat History + Google Sign-In) ====
     with st.sidebar:
         st.title("Account")
-
+        user = None
         # Google Sign-In Section
         if "google_user" not in st.session_state:
             login_url = get_login_url()
@@ -79,7 +81,7 @@ def main():
         st.divider()
 
         st.subheader("📝 Chat History")
-        if st.session_state["google_user"]:
+        if "google_user" in st.session_state:
             user_info = st.session_state["google_user"]
             for chat in user_info["chat_history"]:
                 chat_title = chat["title"]
@@ -114,7 +116,8 @@ def main():
         confidence = top_confidences[0]
 
         # Generate AI response if no history exists
-        if not st.session_state.current_chat_history:
+        if not st.session_state["current_chat_history"]:
+            print("Generating AI response...")
             generate_clip_description(best_caption, confidence)
 
     # Chat Interaction
@@ -124,13 +127,14 @@ def main():
     user_prompt = st.chat_input("Ask LLAMA about this diagnosis...")
     if user_prompt:
         messages = process_user_input(user_prompt)  # Handle user query
-        # Create title after responding so user doesnt wait for 2 responses
-        if "current_chat_id" not in st.session_state:
-            title = generate_chat_title(user_prompt)
-            st.session_state["current_chat_id"] = create_new_chat(user["sub"], title)
+        if user:
+            # Create title after responding so user doesnt wait for 2 responses
+            if "current_chat_id" not in st.session_state:
+                title = generate_chat_title(user_prompt)
+                st.session_state["current_chat_id"] = create_new_chat(user["sub"], title)
         
-        update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[0])
-        update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[1])
+            update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[0])
+            update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[1])
         prompts += 1
 
 if __name__ == "__main__":

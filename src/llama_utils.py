@@ -50,7 +50,7 @@ def process_user_input(user_prompt):
 def display_current_chat():
     # Display the entire chat history in correct order
     for message in st.session_state["current_chat_history"]:
-        role_icon = "🧑‍💻" if message["role"] == "user" else "🤖"
+        role_icon = "🧑‍🌾" if message["role"] == "user" else "🤖"
         st.chat_message(message["role"]).markdown(f"{role_icon} {message['content']}")
 
 # Prompt the LLM and show results to user. Hide initial prompt from user.
@@ -74,7 +74,9 @@ def generate_clip_description(caption, confidence):
     )
 
     assistant_response = response.choices[0].message.content
+    print("CLIP AI Response: ", assistant_response) 
     st.session_state["current_chat_history"].append({"role": "assistant", "content": assistant_response})
+    display_current_chat()
 
 
 def process_user_input_norag(st, user_prompt):
@@ -116,7 +118,7 @@ def process_silent_instruction(hidden_instruction):
 def generate_chat_title(user_prompt):
     """Generate a chat title based on content"""
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. Generate a concise and descriptive 2-4 word title for the following content."},
+        {"role": "system", "content": "You are a helpful assistant. Generate a concise and descriptive 3-4 word title for the following content."},
         {"role": "user", "content": f"Content: {user_prompt}\n\nTitle:"}
     ]
 
