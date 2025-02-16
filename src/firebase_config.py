@@ -23,7 +23,7 @@ def create_user_if_not_exists(user_id, user_name, user_email):
             "created_at": datetime.now(timezone.utc),
         })
 
-def create_new_chat(user_id):
+def create_new_chat(user_id, title="New Chat"):
     """Creates a new chat session with placeholder data."""
     chat_id = str(uuid.uuid4())  # Generate a unique chat ID
     chat_ref = db.collection("users").document(user_id).collection("chats").document(chat_id)
@@ -31,7 +31,7 @@ def create_new_chat(user_id):
     chat_ref.set({
         "created_at": datetime.now(timezone.utc),
         "last_updated": datetime.now(timezone.utc),
-        "title": "New Chat",  # Placeholder title
+        "title": title,  # Placeholder title
         "messages": []
     })
     return chat_id

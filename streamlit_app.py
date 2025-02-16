@@ -7,7 +7,7 @@ from src.clip_utils import load_clip_model, get_text_features, get_image_feature
 from src.classes import get_candidate_captions
 from src.oauth import get_login_url, get_google_info
 from src.firebase_config import create_user_if_not_exists, create_new_chat, fetch_chat_history, load_chat, update_chat_history
-from src.llama_utils import generate_clip_description, process_user_input, display_current_chat
+from src.llama_utils import generate_clip_description, process_user_input, display_current_chat, generate_chat_title
 
 
 def main():
@@ -48,6 +48,22 @@ def main():
                     st.rerun()
         # If logged in, display user info and logout button
         else:
+            st.markdown(
+                f"""
+                <style>
+                div[data-testid="stButton"] > button {{
+                    width: 100%;
+                    display: block;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    /* padding: 12px 16px; */
+                    text-overflow: ellipsis;
+                }}
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+
             user = st.session_state["google_user"]
             col1, col2 = st.columns([1, 4])  # Align profile picture and text
             with col1:
@@ -59,10 +75,9 @@ def main():
             if st.button("Logout", use_container_width=True):
                 st.session_state.pop("google_user", None)
                 st.rerun()
-
+                        # Inject custom CSS to style the chat history buttons
         st.divider()
 
-        # Display Chat History in Sidebar
         st.subheader("📝 Chat History")
         if st.session_state["google_user"]:
             user_info = st.session_state["google_user"]
@@ -73,6 +88,7 @@ def main():
                     load_chat(user_info["sub"], chat_id)
                     clicked_previous_chat = True
                     st.session_state["current_chat_id"] = chat_id
+
 
     # ==== MAIN CONTENT ====
     st.title("🌱 CLIP Crop & Disease Detection")
@@ -107,9 +123,12 @@ def main():
         display_current_chat()
     user_prompt = st.chat_input("Ask LLAMA about this diagnosis...")
     if user_prompt:
-        if "current_chat_id" not in st.session_state:
-            st.session_state["current_chat_id"] = create_new_chat(user["sub"])
         messages = process_user_input(user_prompt)  # Handle user query
+        # Create title after responding so user doesnt wait for 2 responses
+        if "current_chat_id" not in st.session_state:
+            title = generate_chat_title(user_prompt)
+            st.session_state["current_chat_id"] = create_new_chat(user["sub"], title)
+        
         update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[0])
         update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[1])
         prompts += 1

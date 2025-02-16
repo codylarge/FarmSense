@@ -113,14 +113,20 @@ def process_silent_instruction(hidden_instruction):
         messages=messages,
     )
 
-def generate_chat_title(chat_id):
+def generate_chat_title(user_prompt):
     """Generate a chat title based on content"""
-    # Get chat content
-    chat_ref = db.collection("users").document(user_id).collection("chats").document(chat_id)
-    chat_data = chat_ref.get().to_dict()
-    messages = chat_data.get("messages", [])
-    messages.insert(0, "Create a chat title based on the content of the chat:")
-    title = client.chat.completions.create (
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant. Generate a concise and descriptive 2-4 word title for the following content."},
+        {"role": "user", "content": f"Content: {user_prompt}\n\nTitle:"}
+    ]
+
+    response = client.chat.completions.create(
         model=MODEL,
         messages=messages,
+        max_tokens=10, 
+        n=1,
+        stop=["\n"]
     )
+    # Extract title string from the response
+    title = response.choices[0].message.content.strip()
+    return title
