@@ -54,8 +54,7 @@ def display_current_chat():
         st.chat_message(message["role"]).markdown(f"{role_icon} {message['content']}")
 
 # Prompt the LLM and show results to user. Hide initial prompt from user.
-def generate_clip_description(caption, confidence):
-
+def generate_clip_description(caption, confidence):   
     prompt = (
         f"You have been provided a picture of a {caption}."
         f"You should say what it is, and be open to answering questions about it."
@@ -74,9 +73,13 @@ def generate_clip_description(caption, confidence):
     )
 
     assistant_response = response.choices[0].message.content
-    print("CLIP AI Response: ", assistant_response) 
-    st.session_state["current_chat_history"].append({"role": "assistant", "content": assistant_response})
+    formatted_response = {"role": "assistant", "content": assistant_response}
+    
+    st.session_state["current_chat_history"].append(formatted_response)
     display_current_chat()
+    
+    return formatted_response  # Ensure it returns the formatted response
+
 
 
 def process_user_input_norag(st, user_prompt):

@@ -117,8 +117,12 @@ def main():
 
         # Generate AI response if no history exists
         if not st.session_state["current_chat_history"]:
-            print("Generating AI response...")
-            generate_clip_description(best_caption, confidence)
+            clip_description = generate_clip_description(best_caption, confidence)
+            print("Clip Description: ", clip_description)
+            if "current_chat_id" not in st.session_state:
+                title = generate_chat_title(clip_description)
+                st.session_state["current_chat_id"] = create_new_chat(user["sub"], title)
+            update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], clip_description)
 
     # Chat Interaction
     st.subheader("💬 Chat with LLAMA")
