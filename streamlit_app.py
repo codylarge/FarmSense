@@ -15,7 +15,7 @@ def main():
 
     # Load models
     #model, preprocess, device = load_clip_model()
-    mode, preprocess, device = load_custom_clip_model()
+    model, preprocess, device = load_custom_clip_model()
     candidate_captions = get_candidate_captions()
     clicked_previous_chat = False # temporary.
     prompts = 0 # Track # of prompts. Not ideal method
