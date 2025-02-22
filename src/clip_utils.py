@@ -9,20 +9,16 @@ def load_clip_model():
     model, preprocess = clip.load("ViT-B/32", device=device)
     return model, preprocess, device
 
-def load_custom_clip_model(pth_file_path):
+def load_custom_clip_model(model_path="clip_finetuned.pt"):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    
-    # Load the model structure (ensure it's compatible with your .pth file)
-    model, preprocess = clip.load("ViT-B/32", device=device)
-    
-    # Load the provided weights into the model
-    state_dict = torch.load(pth_file_path, map_location=device)
-    state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
-    state_dict = {k: v for k, v in state_dict.items() if k not in ["classifier.weight", "classifier.bias"]}
 
-    #print("State dict keys: ", state_dict.keys())
-    model.load_state_dict(state_dict)
-    
+    # Load the full saved model
+    model = torch.load(model_path, map_location=device)
+    model.to(device)
+    model.eval()  # Ensure it's in inference mode
+
+    _, preprocess = clip.load("ViT-B/32", device=device)
+
     return model, preprocess, device
 
 # Return vector embeddings for given text (caption)

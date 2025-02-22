@@ -3,6 +3,7 @@ client_secret.json
 firebase_key.json
 
 *.pth
+*.pt
 *key.txt
 # Byte-compiled / optimized / DLL files
 __pycache__/
