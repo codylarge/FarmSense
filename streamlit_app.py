@@ -3,7 +3,7 @@ from PIL import Image
 import numpy as np
 
 # Importing CLIP and LLaMA utilities
-from src.clip_utils import load_clip_model, get_text_features, get_image_features, compute_similarity, load_custom_clip_model
+from src.clip_utils import load_clip_model, get_text_features, get_image_features, compute_similarity, load_custom_clip_model, CLIPFineTuner  
 from src.classes import get_candidate_captions
 from src.oauth import get_login_url, get_google_info
 from src.firebase_config import create_user_if_not_exists, create_new_chat, fetch_chat_history, load_chat, update_chat_history
@@ -101,7 +101,7 @@ def main():
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Image", use_container_width=True)
+        st.image(image, caption="Uploaded Image", width=400)
 
         # Get features and compute similarities
         text_features = get_text_features(candidate_captions, device, model)
@@ -115,7 +115,7 @@ def main():
 
         best_caption = top_captions[0]
         confidence = top_confidences[0]
-
+        st.write("Prediction:" , best_caption, "Confidence:", confidence) 
         # Generate AI response if no history exists
         if not st.session_state["current_chat_history"]:
             clip_description = generate_clip_description(best_caption, confidence)
