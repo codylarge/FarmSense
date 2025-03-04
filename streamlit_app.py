@@ -14,8 +14,8 @@ def main():
     st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
 
     # Load models
-    #model, preprocess, device = load_clip_model()
-    model, preprocess, device = load_custom_clip_model()
+    model, preprocess, device = load_clip_model()
+    #model, preprocess, device = load_custom_clip_model()
     candidate_captions = get_candidate_captions()
     clicked_previous_chat = False # temporary.
     prompts = 0 # Track # of prompts. Not ideal method
@@ -120,10 +120,11 @@ def main():
         if not st.session_state["current_chat_history"]:
             clip_description = generate_clip_description(best_caption, confidence)
             print("Clip Description: ", clip_description)
-            if "current_chat_id" not in st.session_state:
-                title = generate_chat_title(clip_description)
-                st.session_state["current_chat_id"] = create_new_chat(user["sub"], title)
-            update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], clip_description)
+            if user is not None:
+                if "current_chat_id" not in st.session_state:
+                    title = generate_chat_title(clip_description)
+                    st.session_state["current_chat_id"] = create_new_chat(user["sub"], title)
+                update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], clip_description)
 
     # Chat Interaction
     st.subheader("💬 Chat with LLAMA")
@@ -132,7 +133,7 @@ def main():
     user_prompt = st.chat_input("Ask LLAMA about this diagnosis...")
     if user_prompt:
         messages = process_user_input(user_prompt)  # Handle user query
-        if user:
+        if user is not None:
             # Create title after responding so user doesnt wait for 2 responses
             if "current_chat_id" not in st.session_state:
                 title = generate_chat_title(user_prompt)

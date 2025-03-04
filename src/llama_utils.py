@@ -21,6 +21,8 @@ def process_user_input(user_prompt):
     # Append user input to chat history
     user_message = {"role": "user", "content": user_prompt}
     st.session_state["current_chat_history"].append(user_message)
+    
+    display_current_chat()
 
     # Retrieve relevant context from the RAG system
     query_engine = index.as_query_engine()
@@ -42,16 +44,15 @@ def process_user_input(user_prompt):
     assistant_response = response.choices[0].message.content
     assistant_message = {"role": "assistant", "content": assistant_response}
     st.session_state["current_chat_history"].append(assistant_message)
-
-    display_current_chat()
+    st.chat_message("assistant").markdown(assistant_response)
 
     return user_message, assistant_message
 
 def display_current_chat():
     # Display the entire chat history in correct order
     for message in st.session_state["current_chat_history"]:
-        role_icon = "🧑‍🌾" if message["role"] == "user" else "🤖"
-        st.chat_message(message["role"]).markdown(f"{role_icon} {message['content']}")
+        st.chat_message(message["role"]).markdown(message["content"])
+
 
 # Prompt the LLM and show results to user. Hide initial prompt from user.
 def generate_clip_description(caption, confidence):   
@@ -79,8 +80,6 @@ def generate_clip_description(caption, confidence):
     display_current_chat()
     
     return formatted_response  # Ensure it returns the formatted response
-
-
 
 def process_user_input_norag(st, user_prompt):
     st.chat_message("user").markdown(user_prompt)
