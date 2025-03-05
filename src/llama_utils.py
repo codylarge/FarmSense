@@ -24,11 +24,17 @@ def process_user_input(user_prompt):
     
     display_current_chat()
 
+    latest_assistant_message = next(
+        (message for message in reversed(st.session_state["current_chat_history"]) if message["role"] == "assistant"),
+        None
+    )
+    combined_context = f"{latest_assistant_message['content'] if latest_assistant_message else ''} {user_prompt}".strip()
+
     # Retrieve relevant context from the RAG system
     query_engine = index.as_query_engine()
-    retrieved_docs = query_engine.query(user_prompt)  # Fetch relevant data
+    retrieved_docs = query_engine.query(combined_context)  # Fetch relevant data
     context_text = "\n".join([doc.get_text() for doc in retrieved_docs]) if hasattr(retrieved_docs, 'get_text') else str(retrieved_docs)
-
+    print("RAG CONTEXT:", context_text) 
     messages = [
         {"role": "system", "content": "You are a helpful assistant. Use the following retrieved knowledge when answering the user's question."},
         {"role": "system", "content": f"Relevant Context:\n{context_text}"},  # Inject RAG results here
