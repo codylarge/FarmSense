@@ -81,9 +81,20 @@ def main():
                         # Inject custom CSS to style the chat history buttons
         st.divider()
 
-        st.subheader("📝 Chat History")
         if "google_user" in st.session_state:
             user_info = st.session_state["google_user"]
+
+            if st.button("➕ New Chat", use_container_width=True):
+                st.session_state["current_chat_history"] = []  # Clear chat history in session
+                st.session_state.pop("current_chat_id", None)  # Remove current chat ID
+
+                # Dont create new chat yet in case nothing is typed
+                #new_chat_id = create_new_chat(user_info["sub"], "New Chat")
+                #st.session_state["current_chat_id"] = new_chat_id
+
+                st.rerun()  # Refresh the page to reflect changes
+
+            st.subheader("📝 Chat History")
             for chat in user_info["chat_history"]:
                 chat_title = chat["title"]
                 chat_id = chat["chat_id"]
@@ -91,7 +102,6 @@ def main():
                     load_chat(user_info["sub"], chat_id)
                     clicked_previous_chat = True
                     st.session_state["current_chat_id"] = chat_id
-
 
     # ==== MAIN CONTENT ====
     st.title("🌱 CLIP Crop & Disease Detection")
