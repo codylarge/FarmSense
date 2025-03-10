@@ -47,12 +47,11 @@ def generate_clip_description(caption, confidence, language):
     prompt = (
         f"You have been provided a picture of a {caption}."
         f"You should say what it is, and be open to answering questions about it."
-        f"Provide the information in {language} language."
         f"Avoid mentioning that you have been provided a description"
     )
 
     messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "system", "content": f"You are a helpful assistant. Provide the information in {language} language."},
         {"role": "user", "content": prompt}, 
     ]
 
@@ -74,9 +73,9 @@ def display_current_chat():
     for message in st.session_state["current_chat_history"]:
         st.chat_message(message["role"]).markdown(message["content"])
 
-def generate_chat_title(user_prompt):
+def generate_chat_title(user_prompt, language):
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. Generate a concise 3-4 word title for the following conversation."},
+        {"role": "system", "content": f"You are a helpful assistant. Generate a concise 3-4 word title for the following conversation in {language} language."},
         {"role": "user", "content": f"Content: {user_prompt}\n\nTitle:"}
     ]
 

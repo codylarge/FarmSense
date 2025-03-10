@@ -156,7 +156,7 @@ def main():
         messages = process_user_input(user_prompt, language)  # Handle user query
         if user is not None:
             if "current_chat_id" not in st.session_state:
-                title = generate_chat_title(user_prompt)
+                title = generate_chat_title(user_prompt, language)
                 st.session_state["current_chat_id"] = create_new_chat(user["sub"], title)
             update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[0])
             update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[1])

@@ -69,10 +69,7 @@ def load_custom_clip_model(model_path="src/clip_finetuned.pth", classifier_path=
     if "classifier.weight" in state_dict and "classifier.bias" in state_dict:
         model.classifier.weight.data = state_dict["classifier.weight"]
         model.classifier.bias.data = state_dict["classifier.bias"]
-        st.write("✅ Successfully loaded classifier weights!")
 
-    else:
-        st.write("❌ Fine-tuned classifier weights were NOT found in checkpoint!")
 
     # Load the rest of the model (excluding classifier)
     state_dict.pop("classifier.weight", None)
