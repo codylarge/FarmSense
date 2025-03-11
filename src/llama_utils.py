@@ -13,7 +13,6 @@ PERSIST_DIR = "./rag/vector_storage"
 storage_context = StorageContext.from_defaults(persist_dir=PERSIST_DIR)
 index = load_index_from_storage(storage_context)
 
-
 def process_user_input(user_prompt, language):
     user_message = {"role": "user", "content": user_prompt}
     st.session_state["current_chat_history"].append(user_message)

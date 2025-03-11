@@ -6,7 +6,7 @@ import numpy as np
 
 # Importing CLIP and LLaMA utilities
 from src.clip_utils import load_custom_clip_model, get_text_features, get_image_features, classify_image, compute_similarity
-from src.classes import get_candidate_captions
+from src.classes import get_classes 
 from src.oauth import get_login_url, get_google_info
 from src.firebase_config import create_user_if_not_exists, create_new_chat, fetch_chat_history, load_chat, update_chat_history
 from src.llama_utils import generate_clip_description, process_user_input, display_current_chat, generate_chat_title
@@ -17,6 +17,7 @@ def main():
     # Load the fine-tuned CLIP model
     model, preprocess, device = load_custom_clip_model()
 
+    #classes = get_classes()
     clicked_previous_chat = False  # temporary
     prompts = 0  # Track # of prompts
 
@@ -32,9 +33,6 @@ def main():
         user = None
 
         language = st.selectbox("Select Language", ["English", "Spanish"])
-
-      
-
 
         # Google Sign-In Section
         if "google_user" not in st.session_state:
@@ -86,77 +84,25 @@ def main():
     # ==== MAIN CONTENT ====
     st.title("🌱 CLIP Crop & Disease Detection")
     st.write("Upload an image and let AI detect potential crop diseases and provide insights.")
-
-    # Image Upload & Processing
-    col1, col2 = st.columns([3, 1])  # File uploader (wider) on left, dropdown (smaller) on right
-
-    with col1:
-        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
-
-    with col2:
-        selected_crop = st.selectbox("Select Crop Type", ["Select a Crop", "Wheat", "Rice", "Corn", "Potato"], 
-                                 key="crop_selection", help="Select a crop or use all available classes.")
-
     
-    # ✅ Get captions dynamically based on user selection
-    candidate_captions = get_candidate_captions(selected_crop)
+    selected_crop = st.selectbox("Select uploaded crop type for better accuracy", ["Select a Crop", "Wheat", "Rice", "Corn", "Potato"], 
+        key="crop_selection_popup", help="Select a crop or use all available classes.")
+    custom_captions = get_classes(selected_crop)
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"], key="unique_key_1")
 
-    st.write(f"🔍 Captions used for text features: {candidate_captions}")  
-
-
-    
     if uploaded_file is not None:
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Uploaded Image", width=400)
+        best_caption, confidence = classify_image(image, model, preprocess, device, custom_captions)
+        st.write("Prediction:" , best_caption, "Confidence:", confidence) 
 
-        # Extract features and compute similarities
-        text_features = get_text_features(candidate_captions, device, model)
-
-        # Apply preprocessing transformations
-        transformed_image = preprocess(image)  # Convert to tensor [3, 224, 224]
-        transformed_image = transformed_image.unsqueeze(0).to(device)  # Add batch dimension [1, 3, 224, 224]
-
-        # 🔥 Pass original image (PIL format) to get_image_features
-        image_features = get_image_features(image, device, model, preprocess)
-
-
-        # 🔥 Use `classify_image()` for consistency
-        logits, confidences = classify_image(image_features, model)
-
-        # Select top N predictions
-        N = 3  # Change as needed
-        top_indices = torch.argsort(confidences, descending=True)[:N]  # Get top N indices
-
-       
-        # ✅ Ensure indices are within bounds before indexing candidate_captions
-        top_classes = [candidate_captions[idx.item()] for idx in top_indices if idx.item() < len(candidate_captions)]
-        top_confidences = [confidences[idx].item() * 100 for idx in top_indices if idx.item() < len(candidate_captions)]
-
-
-        # Display predictions in Streamlit
-        st.write("🔍 **Top Predictions:**")
-        for i in range(N):
-            st.write(f"**{i+1}. {top_classes[i]}** - {top_confidences[i]:.2f}% confidence")
-
-
-        # Print debugging info
-        st.write("🔍 Model Predictions (Classifier-Based):")
-        st.write(f"Logits: {logits.tolist()}")
-        st.write(f"Confidence Scores: {top_confidences}")
-
-        top_captions = [candidate_captions[idx.item()] for idx in top_indices]  # Convert tensor index to int
-
-
-        # Display top prediction
-        best_caption = top_captions[0]
-        confidence = top_confidences[0]
-        st.success(f"🔍 Prediction: **{best_caption}** with {confidence:.2f}% confidence")
-
-
-
-        # Generate AI response if no chat history exists
-        if not st.session_state["current_chat_history"]:
+        # Generate AI response if no history exists (prevents from regenerating description on each rerun)
+        if not st.session_state["current_chat_history"] or prompts == 0:
+            # Reset chat history if it exists (User switched crop type after uploading image)
+            if st.session_state["current_chat_history"]:
+                st.session_state["current_chat_history"] = []
             clip_description = generate_clip_description(best_caption, confidence, language)
+            print("Clip Description: ", clip_description)
             if user is not None:
                 if "current_chat_id" not in st.session_state:
                     title = generate_chat_title(clip_description)

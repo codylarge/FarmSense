@@ -4,8 +4,9 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 import os
+from src.classes import get_classes
 
-__all__ = ["load_custom_clip_model", "get_text_features", "get_image_features", "compute_similarity", "classify_image"]
+# __all__ = ["load_custom_clip_model", "get_text_features", "get_image_features", "compute_similarity", "classify_image"]
 
 
 import torch.nn.functional as F
@@ -18,7 +19,7 @@ class CLIPFineTuner(nn.Module):
 
     def forward(self, x):
         features = self.model.encode_image(x).float()  # Extract image features
-        features = F.normalize(features, dim=-1)  # ✅ Normalize features
+        features = F.normalize(features, dim=-1)  # Normalize features
         return self.classifier(features)  # Predict class logits
 
     def encode_text(self, text):
@@ -26,73 +27,40 @@ class CLIPFineTuner(nn.Module):
     
     def encode_image(self, image):
         return self.model.encode_image(image)
-    
 
-
-@st.cache_resource
-
-
-
-
-def load_custom_clip_model(model_path="src/clip_finetuned.pth", classifier_path="src/classifier_weights.pth", num_classes=13):
+def load_basic_clip_model():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # Ensure paths exist
-    model_path = os.path.abspath(model_path)
-    classifier_path = os.path.abspath(classifier_path)
-
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"❌ Model file not found: {model_path}. Check the path!")
-
-    if not os.path.exists(classifier_path):
-        raise FileNotFoundError(f"❌ Classifier file not found: {classifier_path}. Did you save it?")
-
-    # ✅ Load fine-tuned CLIP backbone
-    base_model, _ = clip.load("ViT-B/32", device=device)
-    model = CLIPFineTuner(base_model, num_classes).to(device)
-
-    # ✅ Load fine-tuned backbone weights (excluding classifier)
-    checkpoint = torch.load(model_path, map_location=device)
-    model_dict = model.state_dict()
-    pretrained_dict = {k: v for k, v in checkpoint.items() if k in model_dict and "classifier" not in k}
-    model_dict.update(pretrained_dict)
-    model.load_state_dict(model_dict)
-
-    # ✅ Debug: Check if classifier weights are actually loaded
-    # Debugging - Check classifier weights before and after loading
-    print(f"🔍 Before loading, classifier weights sample: {model.classifier.weight[0][:5]}")
-
-
-    state_dict = torch.load(model_path, map_location=device)
-
-# 🔥 Manually load classifier weights if they exist
-    if "classifier.weight" in state_dict and "classifier.bias" in state_dict:
-        model.classifier.weight.data = state_dict["classifier.weight"]
-        model.classifier.bias.data = state_dict["classifier.bias"]
-
-
-    # Load the rest of the model (excluding classifier)
-    state_dict.pop("classifier.weight", None)
-    state_dict.pop("classifier.bias", None)
-   
-
-    classifier_state_dict = {k.replace("classifier.", ""): v for k, v in state_dict.items()}  
-
-    model.classifier.load_state_dict(classifier_state_dict, strict=False)  # Load classifier weights
-
-    print(f"✅ After loading, classifier weights sample: {model.classifier.weight[0][:5]}")
-
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),  
-        transforms.ToTensor(),
-        transforms.Normalize(mean=(0.48145466, 0.4578275, 0.40821073), 
-                             std=(0.26862954, 0.26130258, 0.27577711))  
-    ])
-
+    model, preprocess = clip.load("ViT-B/32", device=device)
     return model, preprocess, device
 
+def load_custom_clip_model(model_path="clip_finetuned.pth", num_classes=13):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    # Load original CLIP model
+    base_model, _ = clip.load("ViT-B/32", device=device)
 
+    # Wrap it in CLIPFineTuner
+    model = CLIPFineTuner(base_model, num_classes).to(device)
+
+    # Load the saved state_dict (instead of the full model)
+    state_dict = torch.load(model_path, map_location=device)
+
+    if 'state_dict' in state_dict:  # If saved inside a dict
+        state_dict = state_dict['state_dict']
+
+    model.load_state_dict(state_dict)  # Load weights
+    model.to(device)
+    model.eval()
+
+    # Define a preprocessing pipeline (must match training-time transforms)
+    preprocess = transforms.Compose([
+        transforms.Resize((224, 224)), 
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.481, 0.457, 0.408], std=[0.268, 0.261, 0.275])
+    ])
+
+    #print("Custom mode:", model)
+    return model, preprocess, device
 
 def get_text_features(captions, device, model):
     text_tokens = clip.tokenize(captions).to(device)
@@ -106,32 +74,33 @@ def get_image_features(image, device, model, preprocess):
         image_features = model.encode_image(image_input)
     return image_features
 
-
-
 def compute_similarity(image_features, text_features):
-    """Compute cosine similarity and return normalized confidence values"""
-    image_features = image_features / image_features.norm(dim=-1, keepdim=True)
-    text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+    image_features /= image_features.norm(dim=-1, keepdim=True)
+    text_features /= text_features.norm(dim=-1, keepdim=True)
+    
+    similarity = (image_features @ text_features.T).squeeze(0)
+    
+    return similarity
 
-    similarities = (image_features @ text_features.T).squeeze(0)
+def classify_image(image, model, preprocess, device, custom_captions):
+    # Get candidate captions and their features
+    text_inputs = torch.cat([clip.tokenize(custom_captions[c]) for c in custom_captions.keys()]).to(device)
+    
+    image = preprocess(image).unsqueeze(0).to(device)  # Apply CLIP preprocessing
 
-    # ✅ Scale similarities before softmax to sharpen confidence
-    confidences = F.softmax(similarities * 5, dim=0)  # Scale by 5 for better separation
-    return similarities, confidences
+    # Extract image and text features
+    image_features = model.encode_image(image)
+    image_features /= image_features.norm(dim=-1, keepdim=True)
 
+    text_features = model.encode_text(text_inputs)
+    text_features /= text_features.norm(dim=-1, keepdim=True)
 
+    # Compute similarity between image and text features
+    similarity = image_features @ text_features.T  # Shape: (1, num_classes)
 
-def classify_image(image_features, model):
-    model.eval()
+    # Find the caption with the highest similarity score
+    predicted_index = similarity.argmax(dim=-1).item()  # Convert tensor to int
+    predicted_label = list(custom_captions.keys())[predicted_index]
+    best_similarity_score = similarity[0, predicted_index].item()  # Extract top similarity score
 
-    with torch.no_grad():
-        logits = model.classifier(image_features) * 6 
-
-        # 🔥 Apply temperature scaling (Lower temp = stronger predictions)
-        temperature = 0.7  # Test values between 0.8 to 1.5
-        logits /= temperature  
-
-        probabilities = F.softmax(logits, dim=-1)  
-
-    return logits.squeeze(0), probabilities.squeeze(0)
-
+    return predicted_label, best_similarity_score  # String, Number
