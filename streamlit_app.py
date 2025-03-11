@@ -17,7 +17,6 @@ def main():
     # Load the fine-tuned CLIP model
     model, preprocess, device = load_custom_clip_model()
 
-    candidate_captions = get_candidate_captions()
     clicked_previous_chat = False  # temporary
     prompts = 0  # Track # of prompts
 
@@ -89,7 +88,23 @@ def main():
     st.write("Upload an image and let AI detect potential crop diseases and provide insights.")
 
     # Image Upload & Processing
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
+    col1, col2 = st.columns([3, 1])  # File uploader (wider) on left, dropdown (smaller) on right
+
+    with col1:
+        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
+
+    with col2:
+        selected_crop = st.selectbox("Select Crop Type", ["Select a Crop", "Wheat", "Rice", "Corn", "Potato"], 
+                                 key="crop_selection", help="Select a crop or use all available classes.")
+
+    
+    # ✅ Get captions dynamically based on user selection
+    candidate_captions = get_candidate_captions(selected_crop)
+
+    st.write(f"🔍 Captions used for text features: {candidate_captions}")  
+
+
+    
     if uploaded_file is not None:
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Uploaded Image", width=400)
@@ -112,9 +127,11 @@ def main():
         N = 3  # Change as needed
         top_indices = torch.argsort(confidences, descending=True)[:N]  # Get top N indices
 
-        # ✅ Convert tensor indices to list of integers before using as list indices
-        top_classes = [candidate_captions[idx.item()] for idx in top_indices]
-        top_confidences = [confidences[idx].item() * 100 for idx in top_indices]
+       
+        # ✅ Ensure indices are within bounds before indexing candidate_captions
+        top_classes = [candidate_captions[idx.item()] for idx in top_indices if idx.item() < len(candidate_captions)]
+        top_confidences = [confidences[idx].item() * 100 for idx in top_indices if idx.item() < len(candidate_captions)]
+
 
         # Display predictions in Streamlit
         st.write("🔍 **Top Predictions:**")
