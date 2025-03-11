@@ -13,6 +13,17 @@ PERSIST_DIR = "./rag/vector_storage"
 storage_context = StorageContext.from_defaults(persist_dir=PERSIST_DIR)
 index = load_index_from_storage(storage_context)
 
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+# Load embedding model for similarity checking
+embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+from sentence_transformers import SentenceTransformer, util
+
+# Load the sentence transformer model
+similarity_model = SentenceTransformer("all-MiniLM-L6-v2")
+
 def process_user_input(user_prompt, language):
     user_message = {"role": "user", "content": user_prompt}
     st.session_state["current_chat_history"].append(user_message)
@@ -23,6 +34,20 @@ def process_user_input(user_prompt, language):
     retrieved_docs = query_engine.query(user_prompt)  
     context_text = "\n".join([doc.get_text() for doc in retrieved_docs]) if hasattr(retrieved_docs, 'get_text') else str(retrieved_docs)
 
+    '''
+    # 🔥 Compute semantic similarity between user query and retrieved context
+    query_embedding = similarity_model.encode(user_prompt, convert_to_tensor=True)
+    context_embedding = similarity_model.encode(context_text, convert_to_tensor=True)
+    similarity_score = util.pytorch_cos_sim(query_embedding, context_embedding).item()
+
+    similarity_threshold = 0.9  # Adjust based on performance
+
+    if similarity_score < similarity_threshold:
+        assistant_response = "I'm sorry, but your question seems unrelated to the available knowledge."
+        st.chat_message("assistant").markdown(assistant_response)
+        st.session_state["current_chat_history"].append({"role": "assistant", "content": assistant_response})
+        return user_message, {"role": "assistant", "content": assistant_response}
+    '''
     messages = [
         {"role": "system", "content": f"You are a helpful assistant. Use retrieved knowledge to answer the user's question in {language}."},
         {"role": "system", "content": f"Relevant Context:\n{context_text}"},
@@ -42,7 +67,8 @@ def process_user_input(user_prompt, language):
     return user_message, assistant_message
 
 
-def generate_clip_description(caption, confidence, language):   
+
+def generate_clip_description(caption, language):   
     prompt = (
         f"You have been provided a picture of a {caption}."
         f"You should say what it is, and be open to answering questions about it."

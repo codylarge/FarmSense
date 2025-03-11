@@ -14,8 +14,7 @@ from src.llama_utils import generate_clip_description, process_user_input, displ
 def main():
     st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
 
-    # Load the fine-tuned CLIP model
-    model, preprocess, device = load_custom_clip_model()
+
 
     #classes = get_classes()
     clicked_previous_chat = False  # temporary
@@ -91,13 +90,15 @@ def main():
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"], key="unique_key_1")
 
     if uploaded_file is not None:
+            # Load the fine-tuned CLIP model
+        model, preprocess, device = load_custom_clip_model()
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Uploaded Image", width=400)
         best_caption, confidence = classify_image(image, model, preprocess, device, custom_captions)
         st.write("Prediction:" , best_caption, "Confidence:", confidence) 
 
         # Generate AI response if no history exists (prevents from regenerating description on each rerun)
-        if not st.session_state["current_chat_history"] or prompts == 0:
+        if not st.session_state["current_chat_history"]:
             # Reset chat history if it exists (User switched crop type after uploading image)
             if st.session_state["current_chat_history"]:
                 st.session_state["current_chat_history"] = []
@@ -105,7 +106,7 @@ def main():
             print("Clip Description: ", clip_description)
             if user is not None:
                 if "current_chat_id" not in st.session_state:
-                    title = generate_chat_title(clip_description)
+                    title = generate_chat_title(clip_description, language)
                     st.session_state["current_chat_id"] = create_new_chat(user["sub"], title)
                 update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], clip_description)
 
