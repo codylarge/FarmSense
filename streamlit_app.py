@@ -3,7 +3,7 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 import numpy as np
-
+'''
 # Importing CLIP and LLaMA utilities
 from src.clip_utils import load_custom_clip_model, get_text_features, get_image_features, classify_image, compute_similarity
 from src.classes import get_classes 
@@ -148,6 +148,6 @@ def main():
             update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[0])
             update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[1])
         prompts += 1
-
+'''
 if __name__ == "__main__":
     main()
