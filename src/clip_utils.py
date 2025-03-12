@@ -5,6 +5,8 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 import os
 from src.classes import get_classes
+import requests
+
 
 # __all__ = ["load_custom_clip_model", "get_text_features", "get_image_features", "compute_similarity", "classify_image"]
 
@@ -33,34 +35,74 @@ def load_basic_clip_model():
     model, preprocess = clip.load("ViT-B/32", device=device)
     return model, preprocess, device
 
-def load_custom_clip_model(model_path="clip_finetuned.pth", num_classes=13):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Load original CLIP model
-    base_model, _ = clip.load("ViT-B/32", device=device)
+MODEL_URL = "https://huggingface.co/rahat15/CLIP-Finetune/resolve/main/clip_finetuned.pth"
 
-    # Wrap it in CLIPFineTuner
-    model = CLIPFineTuner(base_model, num_classes).to(device)
+if "streamlit" in os.getcwd():
+    MODEL_PATH = "/tmp/clip_finetuned.pth"  # Streamlit Cloud Temporary Directory
+else:
+    MODEL_PATH = os.path.expanduser(".clip_models/clip_finetuned.pth")  # Local Directory
 
-    # Load the saved state_dict (instead of the full model)
-    state_dict = torch.load(model_path, map_location=device)
 
-    if 'state_dict' in state_dict:  # If saved inside a dict
-        state_dict = state_dict['state_dict']
+def download_model():
+    """Ensures the model is downloaded before loading."""
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)  # ✅ Ensure the directory exists
 
-    model.load_state_dict(state_dict)  # Load weights
-    model.to(device)
-    model.eval()
+    if not os.path.exists(MODEL_PATH):
+        print(f"🚀 Downloading CLIP model to {MODEL_PATH}...")
+        with st.spinner("Downloading model... Please wait."):
+            try:
+                response = requests.get(MODEL_URL, stream=True)
+                response.raise_for_status()  # Check for HTTP errors
+                
+                with open(MODEL_PATH, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                
+                print(f"✅ Model downloaded successfully at {MODEL_PATH}")
+            except Exception as e:
+                st.error(f"❌ Model download failed: {e}")
+                return False
+    return True
 
-    # Define a preprocessing pipeline (must match training-time transforms)
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)), 
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.481, 0.457, 0.408], std=[0.268, 0.261, 0.275])
-    ])
 
-    #print("Custom mode:", model)
-    return model, preprocess, device
+@st.cache_resource
+def load_custom_clip_model(num_classes=13):
+    """Load CLIP fine-tuned model after ensuring it's downloaded."""
+    model_downloaded = download_model()
+    if not model_downloaded:
+        return None, None, None
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    try:
+        base_model, _ = clip.load("ViT-B/32", device=device)
+        model = CLIPFineTuner(base_model, num_classes).to(device)
+
+        if not os.path.exists(MODEL_PATH):
+            raise FileNotFoundError(f"❌ Model file not found at {MODEL_PATH}")
+
+        # 🔥 Fix: Explicitly set weights_only=False to allow full state_dict loading
+        state_dict = torch.load(MODEL_PATH, map_location=device, weights_only=False)
+
+        if 'state_dict' in state_dict:
+            state_dict = state_dict['state_dict']
+
+        model.load_state_dict(state_dict)
+        model.eval()
+
+        print("✅ CLIP model loaded successfully.")
+        return model, preprocess, device
+
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
+        return None, None, None
+
+# Ensure model is loaded
+model, preprocess, device = load_custom_clip_model()
+if model is None:
+    st.stop()  # Stop execution if model fails to load
+
 
 def get_text_features(captions, device, model):
     text_tokens = clip.tokenize(captions).to(device)
