@@ -329,6 +329,7 @@ Treatment:
 Fungicide application during the early stages of infection
 Removal and destruction of infected plant materials
 Regular monitoring to identify and control the disease early
+
 Yellow Rusted Wheat (Puccinia striiformis)
 Description:
 Yellow rust, caused by Puccinia striiformis, results in yellow streaks on leaves, leading to a significant loss in yield if not controlled.

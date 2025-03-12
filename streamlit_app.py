@@ -124,7 +124,7 @@ def main():
             # Reset chat history if it exists (User switched crop type after uploading image)
             if st.session_state["current_chat_history"]:
                 st.session_state["current_chat_history"] = []
-            clip_description = generate_clip_description(best_caption, confidence, language)
+            clip_description = generate_clip_description(best_caption, language)
             print("Clip Description: ", clip_description)
             if user is not None:
                 if "current_chat_id" not in st.session_state:
