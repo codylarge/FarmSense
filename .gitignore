@@ -2,7 +2,6 @@
 client_secret.json
 firebase_key.json
 
-.streamlit
 *.pth
 *.pt
 *key.txt
