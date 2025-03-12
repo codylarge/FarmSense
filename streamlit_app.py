@@ -8,7 +8,7 @@ import numpy as np
 from src.clip_utils import load_custom_clip_model, get_text_features, get_image_features, classify_image, compute_similarity
 from src.classes import get_classes 
 from src.oauth import get_login_url, get_google_info
-from src.firebase_config import create_user_if_not_exists, create_new_chat, fetch_chat_history, load_chat, update_chat_history
+from src.firebase_config import create_user_if_not_exists, create_new_chat, fetch_chat_history, load_chat, update_chat_history, add_feedback
 from src.llama_utils import generate_clip_description, process_user_input, display_current_chat, generate_chat_title
 
 def main():
@@ -29,8 +29,7 @@ def main():
         user = None
 
         language = st.selectbox("Select Language", ["English", "Spanish"])
-
-        # Google Sign-In Section
+            
         if "google_user" not in st.session_state:
             login_url = get_login_url()
             st.markdown(f'<a href="{login_url}" target="_self"><button style="width: 100%;">🔑 Sign in with Google</button></a>', unsafe_allow_html=True)
@@ -64,10 +63,22 @@ def main():
             user = st.session_state["google_user"]
             col1, col2 = st.columns([1, 4])
             with col1:
-                st.image(user["picture"], width=40)
+                profile_picture = user.get("picture", "")  # Safely get picture URL
+                if profile_picture:  
+                    st.image(profile_picture, width=40)
+                else:  
+                    st.image("user.png", width=40)  # Use a default placeholder
             with col2:
                 st.write(f"**{user['name']}**")
                 st.write(f"📧 {user['email']}")
+                    # Feedback Section
+
+            st.subheader("💬 Feedback")
+            feedback = st.text_area("Let us know your thoughts!", key="feedback_input")
+
+            if st.button("Submit Feedback"):
+                add_feedback(user["sub"], feedback)
+                st.success("Thank you for your feedback!")
 
             if st.button("Logout", use_container_width=True):
                 st.session_state.pop("google_user", None)

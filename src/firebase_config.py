@@ -73,3 +73,10 @@ def load_chat(user_id, chat_id):
     else:
         st.warning("Chat not found.")
     
+def add_feedback(user_id, feedback):
+    """Add user feedback to the Firestore database."""
+    feedback_ref = db.collection("users").document(user_id).collection("feedback").document()
+    feedback_ref.set({
+        "created_at": datetime.now(timezone.utc),
+        "feedback": feedback
+    })
