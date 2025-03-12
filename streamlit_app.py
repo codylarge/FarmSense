@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 
 # Importing CLIP and LLaMA utilities
-from src.clip_utils import load_custom_clip_model, get_text_features, get_image_features, classify_image, compute_similarity
+from src.clip_utils import load_custom_clip_model, get_text_features, get_image_features, classify_image, compute_similarity, load_basic_clip_model
 from src.classes import get_classes 
 from src.llama_utils import generate_clip_description, process_user_input, display_current_chat, generate_chat_title
 from src.oauth import get_login_url, get_google_info
@@ -95,7 +95,7 @@ def main():
             st.session_state.uploaded_image = uploaded_file
 
             # Load CLIP model (cached)
-            model, preprocess, device = load_custom_clip_model()
+            model, preprocess, device = load_basic_clip_model()
 
             st.image(image, caption="Uploaded Image", width=400)
 
