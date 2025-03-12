@@ -3,18 +3,16 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 import numpy as np
-'''
 # Importing CLIP and LLaMA utilities
 from src.clip_utils import load_custom_clip_model, get_text_features, get_image_features, classify_image, compute_similarity
 from src.classes import get_classes 
 from src.oauth import get_login_url, get_google_info
 from src.firebase_config import create_user_if_not_exists, create_new_chat, fetch_chat_history, load_chat, update_chat_history, add_feedback
 from src.llama_utils import generate_clip_description, process_user_input, display_current_chat, generate_chat_title
-'''
+
 def main():
     st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
     #classes = get_classes()
-    '''
     clicked_previous_chat = False  # temporary
     prompts = 0  # Track # of prompts
 
@@ -149,6 +147,6 @@ def main():
             update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[0])
             update_chat_history(st.session_state["google_user"]["sub"], st.session_state["current_chat_id"], messages[1])
         prompts += 1
-'''
+
 if __name__ == "__main__":
     main()
