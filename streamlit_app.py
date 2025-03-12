@@ -20,6 +20,7 @@ def main():
     if "uploaded_image" not in st.session_state:
         st.session_state.uploaded_image = None
 
+    previous_chat_recieved = False
     # === SIDEBAR: Google Sign-In & Chat History ===
     with st.sidebar:
         st.title("Account")
@@ -92,6 +93,7 @@ def main():
                 if st.button(f"{chat_title}", key=chat_id):
                     load_chat(user["sub"], chat_id)
                     st.session_state["current_chat_id"] = chat_id
+                    previous_chat_recieved = True
 
     # ==== MAIN CONTENT ====
     st.title("🌱 CLIP Crop & Disease Detection")
@@ -130,7 +132,9 @@ def main():
 
     # Chat Interaction
     st.subheader("💬 Chat with LLAMA")
-
+    if previous_chat_recieved:
+        display_current_chat()
+        
     user_prompt = st.chat_input("Ask LLAMA about this diagnosis...")
     if user_prompt:
         messages = process_user_input(user_prompt, language)  # Handle user query
