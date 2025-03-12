@@ -1,4 +1,6 @@
 import streamlit as st
+st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
+
 from PIL import Image
 import torch
 import torch.nn.functional as F
@@ -12,8 +14,6 @@ from src.oauth import get_login_url, get_google_info
 from src.firebase_config import create_user_if_not_exists, create_new_chat, fetch_chat_history, load_chat, update_chat_history, add_feedback
 
 def main():
-    st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
-
     # Ensure session state is initialized
     if "current_chat_history" not in st.session_state:
         st.session_state["current_chat_history"] = []
@@ -42,6 +42,22 @@ def main():
                     st.session_state["google_user"] = user_info
                     st.rerun()
         else:
+            st.markdown(
+                  f"""
+                  <style>
+                  div[data-testid="stButton"] > button {{
+                      width: 100%;
+                      display: block;
+                      overflow: hidden;
+                      white-space: nowrap;
+                      /* padding: 12px 16px; */
+                      text-overflow: ellipsis;
+                  }}
+                  </style>
+                  """,
+                  unsafe_allow_html=True
+             )
+            
             user = st.session_state["google_user"]
             col1, col2 = st.columns([1, 4])
             with col1:
@@ -104,7 +120,7 @@ def main():
 
             # If chat history is empty, generate response
             if not st.session_state["current_chat_history"]:
-                clip_description = generate_clip_description(best_caption, confidence, language)
+                clip_description = generate_clip_description(best_caption, language)
                 
                 if user is not None:
                     if "current_chat_id" not in st.session_state:
@@ -114,7 +130,6 @@ def main():
 
     # Chat Interaction
     st.subheader("💬 Chat with LLAMA")
-    display_current_chat()
 
     user_prompt = st.chat_input("Ask LLAMA about this diagnosis...")
     if user_prompt:

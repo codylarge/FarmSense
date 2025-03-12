@@ -70,12 +70,14 @@ def process_user_input(user_prompt, language, selected_crop=None):
     similarity_threshold = 0.5  # Adjust based on testing
     print(f"Similarity Score: {similarity_score}")
     # Reject queries that are outside the domain
+    '''
     if similarity_score < similarity_threshold:
         assistant_response = "I'm sorry, but your question seems unrelated to the available knowledge on crops."
         st.chat_message("assistant").markdown(assistant_response)
         st.session_state["current_chat_history"].append({"role": "assistant", "content": assistant_response})
         print(f"⚠️ Low similarity score ({similarity_score}): Query rejected.")
         return user_message, {"role": "assistant", "content": assistant_response}
+    '''
     
     # Construct message history
     messages = [
