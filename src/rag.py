@@ -27,7 +27,7 @@ def load_and_index_dataset(folder_path):
         if not os.path.exists(PERSIST_DIR):
             print("🔍 Loading crop documents and building the index...")
 
-            # 🔥 Step 1: Read and chunk each crop file
+            # Read and chunk each crop file
             all_documents = []
             for file_name in os.listdir(folder_path):
                 if file_name.endswith(".txt"):  # Ensure we only read text files
@@ -40,16 +40,16 @@ def load_and_index_dataset(folder_path):
                     with open(file_path, "r", encoding="utf-8") as file:
                         text = file.read()
 
-                    # 🔥 Step 2: Chunk the text
+                    # Chunk the text
                     chunked_texts = chunk_text(text)
 
-                    # 🔥 Step 3: Convert each chunk into a document with metadata
+                    # Convert each chunk into a document with metadata
                     for chunk in chunked_texts:
                         doc = Document(text=chunk, metadata={"crop": crop_name, "source": file_path})
 
                         all_documents.append(doc)
 
-            # 🔥 Step 4: Create vector index
+            # Create vector index
             index = VectorStoreIndex.from_documents(all_documents)
 
             # Save the indexed vector store

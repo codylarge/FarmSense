@@ -13,9 +13,6 @@ from src.llama_utils import generate_clip_description, process_user_input, displ
 
 def main():
     st.set_page_config(page_title="CLIP Crop & Disease Detection", layout="wide")
-
-
-
     #classes = get_classes()
     clicked_previous_chat = False  # temporary
     prompts = 0  # Track # of prompts
@@ -49,6 +46,21 @@ def main():
                     st.session_state["google_user"] = user_info
                     st.rerun()
         else:
+            st.markdown(
+                 f"""
+                 <style>
+                 div[data-testid="stButton"] > button {{
+                     width: 100%;
+                     display: block;
+                     overflow: hidden;
+                     white-space: nowrap;
+                     /* padding: 12px 16px; */
+                     text-overflow: ellipsis;
+                 }}
+                 </style>
+                 """,
+                 unsafe_allow_html=True
+            )
             user = st.session_state["google_user"]
             col1, col2 = st.columns([1, 4])
             with col1:
@@ -90,7 +102,7 @@ def main():
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"], key="unique_key_1")
 
     if uploaded_file is not None:
-            # Load the fine-tuned CLIP model
+        # Load the fine-tuned CLIP model
         model, preprocess, device = load_custom_clip_model()
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Uploaded Image", width=400)

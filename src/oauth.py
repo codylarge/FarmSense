@@ -30,8 +30,11 @@ def get_google_info(auth_code):
         flow.fetch_token(code=auth_code)
         credentials = flow.credentials
 
-        id_info = id_token.verify_oauth2_token(credentials.id_token, requests.Request())
-
+        id_info = id_token.verify_oauth2_token(
+            credentials.id_token, 
+            requests.Request(), 
+            clock_skew_in_seconds=2  # Allow 2 seconds of clock skew
+        )
         user_info = {
             "token": credentials.token,
             "refresh_token": credentials.refresh_token,
