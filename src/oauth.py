@@ -5,7 +5,6 @@ import streamlit as st
 
 # Load OAuth credentials from Streamlit secrets
 google_secrets = st.secrets["google_oauth"]
-
 CLIENT_ID = google_secrets["client_id"]
 CLIENT_SECRET = google_secrets["client_secret"]
 AUTH_URI = google_secrets["auth_uri"]
