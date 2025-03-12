@@ -38,18 +38,12 @@ def load_basic_clip_model():
 
 MODEL_URL = "https://huggingface.co/rahat15/CLIP-Finetune/resolve/main/clip_finetuned.pth"
 
-if "streamlit" in os.getcwd():
-    MODEL_PATH = "/tmp/clip_finetuned.pth"  # Streamlit Cloud Temporary Directory
-else:
-    MODEL_PATH = os.path.expanduser(".clip_models/clip_finetuned.pth")  # Local Directory
-
+MODEL_PATH = "/tmp/clip_finetuned.pth"
 
 def download_model():
-    """Ensures the model is downloaded before loading."""
-    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)  # ✅ Ensure the directory exists
-
+    """Ensure the model is downloaded before loading."""
     if not os.path.exists(MODEL_PATH):
-        print(f"🚀 Downloading CLIP model to {MODEL_PATH}...")
+        print("🚀 Downloading CLIP model to Streamlit Cloud...")
         with st.spinner("Downloading model... Please wait."):
             try:
                 response = requests.get(MODEL_URL, stream=True)
