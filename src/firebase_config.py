@@ -5,13 +5,30 @@ import uuid  # For generating unique chat IDs
 from datetime import datetime, timezone
 import streamlit as st
 # Check if Firebase is already initialized
+# Load Firebase credentials from secrets.toml
+firebase_secrets = st.secrets["firebase"]
+
+# Ensure the private key is correctly formatted with newlines
+private_key = firebase_secrets["private_key"].replace('\\n', '\n')
+
+cred = credentials.Certificate({
+    "type": firebase_secrets["type"],
+    "project_id": firebase_secrets["project_id"],
+    "private_key_id": firebase_secrets["private_key_id"],
+    "private_key": private_key,
+    "client_email": firebase_secrets["client_email"],
+    "client_id": firebase_secrets["client_id"],
+    "auth_uri": firebase_secrets["auth_uri"],
+    "token_uri": firebase_secrets["token_uri"],
+    "auth_provider_x509_cert_url": firebase_secrets["auth_provider_x509_cert_url"],
+    "client_x509_cert_url": firebase_secrets["client_x509_cert_url"],
+})
+
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")
     firebase_admin.initialize_app(cred)
 
 # Get Firestore client
 db = firestore.client()
-
 
 def create_user_if_not_exists(user_id, user_name, user_email):
     """Check if the user exists in Firestore. If not, create a new user document."""

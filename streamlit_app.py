@@ -28,8 +28,8 @@ def main():
         st.title("Account")
         user = None
 
-        language = st.selectbox("Select Language", ["English", "Spanish"])
-            
+        language = st.selectbox("Select Language", ["English", "Español", "French"])
+        
         if "google_user" not in st.session_state:
             login_url = get_login_url()
             st.markdown(f'<a href="{login_url}" target="_self"><button style="width: 100%;">🔑 Sign in with Google</button></a>', unsafe_allow_html=True)
@@ -118,7 +118,7 @@ def main():
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Uploaded Image", width=400)
         best_caption, confidence = classify_image(image, model, preprocess, device, custom_captions)
-        st.write("Prediction:" , best_caption, "Confidence:", confidence) 
+        # st.write("Prediction:" , best_caption, "Confidence:", confidence) 
 
         # Generate AI response if no history exists (prevents from regenerating description on each rerun)
         if not st.session_state["current_chat_history"]:
