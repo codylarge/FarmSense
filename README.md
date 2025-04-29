@@ -1,4 +1,4 @@
-# [Open in Browser](farmsense.streamlit.app)
+# [Open in Browser](https://farmsense.streamlit.app)
 
 ### How to run it on your own machine
 
